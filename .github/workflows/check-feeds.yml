@@ -1,0 +1,45 @@
+name: Check feeds
+
+on:
+  schedule:
+    # Times are UTC. During Pacific Standard Time these run at
+    # 7:17 am, 11:17 am, 3:17 pm and 7:17 pm (one hour later in summer).
+    - cron: "17 3,15,19,23 * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Only print what would be sent (no notifications, state not saved)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write # the run commits state/seen.json back to the repo
+
+concurrency:
+  group: check-feeds
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Check feeds and notify
+        env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          NTFY_TOKEN: ${{ secrets.NTFY_TOKEN }}
+          NTFY_SERVER: ${{ vars.NTFY_SERVER }}
+        run: python3 check_feeds.py ${{ inputs.dry_run && '--dry-run' || '' }}
+
+      - name: Save seen-item state
+        if: ${{ always() && !inputs.dry_run }}
+        run: |
+          [ -f state/seen.json ] || exit 0
+          git add state/seen.json
+          git diff --cached --quiet && exit 0
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Update seen feed items"
+          git push || { git pull --rebase && git push; }
