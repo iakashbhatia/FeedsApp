@@ -1,0 +1,16 @@
+{
+  "feeds": [
+    {
+      "name": "AWS News Blog",
+      "url": "https://aws.amazon.com/blogs/aws/feed/",
+      "site": "https://aws.amazon.com/blogs/aws/",
+      "max_individual": 10
+    },
+    {
+      "name": "AWS What's New",
+      "url": "https://aws.amazon.com/about-aws/whats-new/recent/feed/",
+      "site": "https://aws.amazon.com/new/",
+      "max_individual": 5
+    }
+  ]
+}
